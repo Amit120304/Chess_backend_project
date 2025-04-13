@@ -25,13 +25,11 @@ app.get("/", (req, res) => {
 
 io.on("connection", function (uniquesocket) {
     console.log("connectedd", uniquesocket.id);
-    let s = (uniquesocket) ? "y" : "n";
-    console.log(s);
-
+    console.log("players", players);
     if (!players.white) {
         players.white = uniquesocket.id;
         uniquesocket.emit("playerRole", "w");
-        console.log("white player connected");
+        // console.log("white player connected");
     }
     else if (!players.black) {
         players.black = uniquesocket.id;
@@ -59,12 +57,12 @@ io.on("connection", function (uniquesocket) {
             if (result) {
                 currentTurn = chess.turn();
                 console.log(move, currentTurn);
-                currentTurn = currentTurn == 'w' ? 'b' : 'w';
+                // currentTurn = (currentTurn == 'w') ? 'b' : 'w';
                 io.emit("move", move);
                 // console.log(chess.fen());
                 io.emit("boardState", chess.fen());
                 console.log("boardState", chess.fen());
-                io.emit("playerRole", currentTurn);
+                // io.emit("playerRole", currentTurn);
             }
             else {
                 console.log("invalid move: ", move);

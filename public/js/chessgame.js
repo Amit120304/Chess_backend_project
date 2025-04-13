@@ -6,13 +6,14 @@ const boardElement = document.querySelector(".chessboard");
 let draggedPiece = null;
 let sourceSquare = null;
 let playerRole = null;
+
 const renderBoard = () => {
-    const board = chess.board();
     boardElement.innerHTML = "";
+    const board = chess.board();
     // console.log(board);
     board.forEach((row, rowindex) => {
         row.forEach((square, squareindex) => {
-            // console.log(square);
+            console.log(square);
             const squareElement = document.createElement("div");
             squareElement.classList.add(
                 "square",
@@ -34,7 +35,9 @@ const renderBoard = () => {
                 // }
                 // console.log(square.type);
                 pieceElement.innerText = getPieceUnicode(square);
+                console.log("square : ", square.type, square.color);
                 pieceElement.draggable = playerRole === square.color;
+                console.log(pieceElement.draggable);
 
                 pieceElement.addEventListener("dragstart", (e) => {
                     if (pieceElement.draggable) {
@@ -47,10 +50,10 @@ const renderBoard = () => {
                 pieceElement.addEventListener("dragend", () => {
                     console.log(draggedPiece);
                     console.log(sourceSquare);
-                    // draggedPiece = null;
-                    // sourceSquare = null;
-                    // console.log(draggedPiece);
-                    // console.log(sourceSquare);
+                    draggedPiece = null;
+                    sourceSquare = null;
+                    console.log(draggedPiece);
+                    console.log(sourceSquare);
                 })
 
                 squareElement.appendChild(pieceElement);
