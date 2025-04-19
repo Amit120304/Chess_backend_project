@@ -77,13 +77,6 @@ io.on("connection", function (uniquesocket) {
         }
     })
 
-
-    // uniquesocket.on("churan", ()=>{
-    //     // backend has 3 ways to reply to the event, on, emit, broadcast
-    //     console.log("churan recieved");
-    //     io.emit("churan paapadi");
-    // })
-
     uniquesocket.on("disconnect", () => {
         console.log("user_disconnected", uniquesocket.id);
     })
