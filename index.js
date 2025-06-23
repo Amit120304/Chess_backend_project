@@ -1,93 +1,55 @@
 import express from 'express';
-import { Server } from 'socket.io';
 import http from 'http';
+import { Server } from 'socket.io';
 import { Chess } from 'chess.js';
-import { title } from 'process';
 
 const app = express();
 const server = http.createServer(app);
-
 const io = new Server(server);
-const chess = new Chess();
-let players = {};
-let currentTurn = 'w';
+let chess = new Chess();
 
-// Set the view engine to EJS
+// Set EJS view engine
 app.set('view engine', 'ejs');
 app.set('views', './views');
-
-// Serve static files from the 'public' directory
+// Static
 app.use(express.static('public'));
+// Root route
+app.get('/', (req, res) => res.render('index'));
 
-app.get("/", (req, res) => {
-    res.render("index", { title: "Chess Game" });
-});
+io.white = null;
+io.black = null;
 
-io.on("connection", function (uniquesocket) {
-    console.log("connectedd", uniquesocket.id);
-    console.log("players", players);
-    if (!players.white) {
-        players.white = uniquesocket.id;
-        uniquesocket.emit("playerRole", "w");
-        // console.log("white player connected");
-    }
-    else if (!players.black) {
-        players.black = uniquesocket.id;
-        uniquesocket.emit("playerRole", "b");
-    }
-    else {
-        uniquesocket.emit("spectatorRole");
-    }
+io.on('connection', socket => {
+    console.log('connected:', socket.id);
+    if (!io.white) { io.white = socket.id; socket.emit('playerRole', 'w'); }
+    else if (!io.black) { io.black = socket.id; socket.emit('playerRole', 'b'); }
+    else { socket.emit('spectatorRole'); }
+    socket.emit('boardState', chess.fen());
 
-    uniquesocket.on("disconnect", () => {
-        if (uniquesocket.id == players.white) {
-            delete players.white;
-        }
-        else if (uniquesocket.id == players.black) {
-            delete players.black;
+    socket.on('move', move => {
+        if ((chess.turn() === 'w' && socket.id !== io.white) ||
+            (chess.turn() === 'b' && socket.id !== io.black)) return;
+        const res = chess.move(move);
+        if (res) {
+            io.emit('move', move);
+            io.emit('boardState', chess.fen());
+            if (chess.game_over()) {
+                const out = chess.in_checkmate()
+                    ? { type: 'checkmate', winner: res.color === 'w' ? 'White' : 'Black' }
+                    : { type: 'draw' };
+                io.emit('gameOver', out);
+                chess = new Chess();
+                io.emit('reset', chess.fen());
+            }
         }
     });
 
-    uniquesocket.on("move", (move) => {
-        try {
-            console.log(move);
-            if (chess.turn() == 'w' && uniquesocket.id !== players.white) return;
-            if (chess.turn() == 'b' && uniquesocket.id !== players.black) return;
-            const result = chess.move(move);
-            if (result) {
-                currentTurn = chess.turn();
-                console.log(move, currentTurn);
-                // currentTurn = (currentTurn == 'w') ? 'b' : 'w';
-                io.emit("move", move);
-                // console.log(chess.fen());
-                io.emit("boardState", chess.fen());
-                console.log("boardState", chess.fen());
-                // io.emit("playerRole", currentTurn);
-            }
-            else {
-                console.log("invalid move: ", move);
-                uniquesocket.emit("invalidMove", move);
-            }
-
-        }
-        catch (err) {
-            console.log(err);
-            uniquesocket.emit("invalidMove", move);
-
-        }
-    })
-
-    uniquesocket.on("disconnect", () => {
-        console.log("user_disconnected", uniquesocket.id);
-    })
-})
-
-const port = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-    res.send('Hello, Express!');
+    socket.on('disconnect', () => {
+        console.log('disconnected:', socket.id);
+        if (socket.id === io.white) io.white = null;
+        if (socket.id === io.black) io.black = null;
+    });
 });
 
-server.listen(port, () => {
-    console.log(`App is running on http://localhost:${port}`);
-});
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Listening on http://localhost:${PORT}`));
