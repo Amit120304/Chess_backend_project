@@ -17,6 +17,7 @@ const renderBoard = () => {
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
             const square = board[r][c];
+            // console.log(`Rendering square at row ${r}, col ${c}:`, square);
             const sqEl = document.createElement('div');
             sqEl.classList.add('square', (r + c) % 2 === 0 ? 'light' : 'dark');
             sqEl.dataset.row = r;
@@ -36,7 +37,6 @@ const renderBoard = () => {
                 p.addEventListener('dragend', () => { draggedPiece = null; sourceSquare = null; });
                 sqEl.appendChild(p);
             }
-
             sqEl.addEventListener('dragover', e => e.preventDefault());
             sqEl.addEventListener('drop', e => {
                 e.preventDefault();
